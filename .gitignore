@@ -1,0 +1,18 @@
+# Secrets (NEVER COMMIT THIS)
+.env
+
+# Python Virtual Environments
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+
+# Backend Database & Media
+backend/test.db
+backend/static/audio/
+
+# Frontend Node Modules
+frontend/node_modules/
+frontend/dist/
+frontend/.env*
