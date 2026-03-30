@@ -4,7 +4,6 @@ sqlalchemy
 python-dotenv
 google-genai
 SpeechRecognition
-pyaudio
 pydub
 gTTS
 pytest
