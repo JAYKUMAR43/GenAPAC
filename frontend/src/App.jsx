@@ -160,8 +160,9 @@ function App() {
   return (
     <div className="app-container">
       <div className="header">
-        <h1>AI Productivity Assistant</h1>
+        <h1>AI Productivity Assistant (v2)</h1>
       </div>
+
 
       <div className="chat-box" ref={chatBoxRef}>
         {messages.length === 0 && !isLoading && (
