@@ -1,26 +1,5 @@
 {
   "version": 2,
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "api/index.py"
-    },
-    {
-      "source": "/static/(.*)",
-      "destination": "/api/index.py"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "frontend/$1"
-    }
-  ],
-  "redirects": [
-    {
-      "source": "/",
-      "destination": "frontend/index.html",
-      "permanent": false
-    }
-  ],
   "builds": [
     {
       "src": "api/index.py",
@@ -32,6 +11,20 @@
       "config": {
         "distDir": "dist"
       }
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "api/index.py"
+    },
+    {
+      "source": "/static/(.*)",
+      "destination": "api/index.py"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/$1"
     }
   ]
 }
