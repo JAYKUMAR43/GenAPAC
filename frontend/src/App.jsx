@@ -1,6 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-const API_BASE = import.meta.env.VITE_API_BASE || (import.meta.env.MODE === 'development' ? "http://localhost:8000" : "https://genapac.onrender.com");
+const API_BASE = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+  ? "http://localhost:8000"
+  : "https://genapac.onrender.com";
+
+console.log("Current API Base:", API_BASE);
 
 function App() {
   const [messages, setMessages] = useState([]);
