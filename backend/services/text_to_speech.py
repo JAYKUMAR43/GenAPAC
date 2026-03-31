@@ -2,8 +2,9 @@ import os
 import uuid
 from gtts import gTTS
 
-# Ensure the static audio directory exists
-AUDIO_STATIC_PATH = "backend/static/audio"
+# Ensure the static audio directory exists relative to this file
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+AUDIO_STATIC_PATH = os.path.join(CURRENT_DIR, "..", "static", "audio")
 os.makedirs(AUDIO_STATIC_PATH, exist_ok=True)
 
 def generate_audio(text: str, lang_code: str = 'en') -> str:

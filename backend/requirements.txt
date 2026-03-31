@@ -9,3 +9,4 @@ gTTS
 pytest
 pydantic
 python-multipart
+imageio-ffmpeg

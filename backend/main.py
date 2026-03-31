@@ -24,8 +24,12 @@ app.add_middleware(
 )
 
 # Serve static files for audio playback
-os.makedirs("backend/static/audio", exist_ok=True)
-app.mount("/static", StaticFiles(directory="backend/static"), name="static")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+AUDIO_DIR = os.path.join(STATIC_DIR, "audio")
+os.makedirs(AUDIO_DIR, exist_ok=True)
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
 
 router_agent = RouterAgent()
 
