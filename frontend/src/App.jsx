@@ -7,11 +7,11 @@ function App() {
   const [inputText, setInputText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const chatBoxRef = useRef(null);
-  
+
   // Auto-scroll chat to bottom
   useEffect(() => {
     if (chatBoxRef.current) {
@@ -25,7 +25,7 @@ function App() {
 
   const handleSendText = async () => {
     if (!inputText.trim()) return;
-    
+
     // Add user message
     const msg = inputText;
     addMessage('user', msg);
@@ -35,15 +35,15 @@ function App() {
     try {
       const formData = new FormData();
       formData.append('message', msg);
-      
+
       const response = await fetch(`${API_BASE}/chat`, {
         method: 'POST',
         body: formData
       });
-      
+
       const data = await response.json();
       addMessage('bot', data.response, data.intent);
-      
+
       if (data.audio_url) {
         playAudio(data.audio_url);
       }
@@ -89,7 +89,7 @@ function App() {
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         sendVoiceData(audioBlob);
-        
+
         // Cleanup stream
         stream.getTracks().forEach(track => track.stop());
       };
@@ -122,7 +122,7 @@ function App() {
       });
 
       const data = await response.json();
-      
+
       // Update the user's voice message with recognized text
       if (data.user_text_detected) {
         setMessages(prev => {
@@ -158,7 +158,7 @@ function App() {
       <div className="header">
         <h1>AI Productivity Assistant</h1>
       </div>
-      
+
       <div className="chat-box" ref={chatBoxRef}>
         {messages.length === 0 && !isLoading && (
           <div className="empty-state">
@@ -187,9 +187,9 @@ function App() {
       </div>
 
       <div className="input-area">
-        <input 
-          type="text" 
-          placeholder="Ask me to schedule a meeting or save a task..." 
+        <input
+          type="text"
+          placeholder="Ask me to schedule a meeting or save a task..."
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={handleKeyDown}
