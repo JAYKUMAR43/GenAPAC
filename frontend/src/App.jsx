@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-const API_BASE = import.meta.env.VITE_API_BASE || (import.meta.env.MODE === 'development' ? "http://localhost:8000" : "");
+const API_BASE = import.meta.env.VITE_API_BASE || (import.meta.env.MODE === 'development' ? "http://localhost:8000" : "https://genapac.onrender.com");
 
 function App() {
   const [messages, setMessages] = useState([]);
