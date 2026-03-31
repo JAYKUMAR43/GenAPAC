@@ -15,7 +15,11 @@
   ],
   "rewrites": [
     {
-      "source": "/api/(.*)",
+      "source": "/chat",
+      "destination": "api/index.py"
+    },
+    {
+      "source": "/voice",
       "destination": "api/index.py"
     },
     {
