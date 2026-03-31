@@ -38,11 +38,20 @@ if os.path.exists(FRONTEND_DIST):
     app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIST, "assets")), name="assets")
 
 @app.get("/")
-async def serve_frontend():
-    index_path = os.path.join(BASE_DIR, "dist", "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    return {"detail": "Frontend not built yet. Please run build script."}
+async def api_root():
+    """
+    Root status page for the Backend API.
+    """
+    return {
+        "status": "online",
+        "message": "AI Productivity Assistant - Backend API is running.",
+        "endpoints": {
+            "chat": "/chat (POST)",
+            "voice": "/voice (POST)",
+            "audio": "/static/audio/ (GET)"
+        }
+    }
+
 
 
 
