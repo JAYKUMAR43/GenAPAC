@@ -2,6 +2,8 @@ from fastapi import FastAPI, UploadFile, File, Form, Depends
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
 
 from backend.database import SessionLocal, engine, Base
 from backend.agents.router_agent import RouterAgent
@@ -29,6 +31,19 @@ STATIC_DIR = os.path.join(BASE_DIR, "static")
 AUDIO_DIR = os.path.join(STATIC_DIR, "audio")
 os.makedirs(AUDIO_DIR, exist_ok=True)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+# Serve Frontend static files
+FRONTEND_DIST = os.path.join(BASE_DIR, "dist")
+if os.path.exists(FRONTEND_DIST):
+    app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIST, "assets")), name="assets")
+
+@app.get("/")
+async def serve_frontend():
+    index_path = os.path.join(BASE_DIR, "dist", "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"detail": "Frontend not built yet. Please run build script."}
+
 
 
 router_agent = RouterAgent()
