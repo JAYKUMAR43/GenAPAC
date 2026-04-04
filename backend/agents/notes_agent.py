@@ -1,28 +1,22 @@
 from sqlalchemy.orm import Session
-from backend.models import Note
+from backend.tools.notes_tool import NotesTool
 
 class NotesAgent:
+    def __init__(self):
+        self.tool = NotesTool()
+
     def handle(self, intent_data: dict, db: Session) -> dict:
         intent = intent_data.get("intent")
         entities = intent_data.get("entities", {})
         
+        input_data = {"db": db}
+        
         if intent == "notes.create":
-            content = entities.get("content")
-            if not content:
-                return {"status": "error", "response": "Note content is missing."}
-            
-            note = Note(content=content)
-            db.add(note)
-            db.commit()
-            db.refresh(note)
-            return {"status": "success", "response": "Note saved successfully.", "data": {"note_id": note.id, "content": note.content}}
-            
+            input_data["action"] = "create"
+            input_data["content"] = entities.get("content")
         elif intent == "notes.list":
-            notes = db.query(Note).all()
-            if not notes:
-                return {"status": "success", "response": "You have no notes saved.", "data": {"notes": []}}
-            note_list = [{"id": n.id, "content": n.content} for n in notes]
-            response_text = f"You have {len(note_list)} notes."
-            return {"status": "success", "response": response_text, "data": {"notes": note_list}}
+            input_data["action"] = "list"
+        else:
+            return {"status": "error", "response": "Invalid notes intent."}
             
-        return {"status": "error", "response": "Invalid notes intent."}
+        return self.tool.execute(input_data)

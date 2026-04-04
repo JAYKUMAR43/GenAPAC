@@ -28,3 +28,11 @@ class ActionLog(Base):
     detected_intent = Column(String)
     action_taken = Column(String)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
+
+class Notification(Base):
+    __tablename__ = "notifications"
+    id = Column(Integer, primary_key=True, index=True)
+    message = Column(String)
+    trigger_time = Column(String) # Can be ISO timestamp
+    status = Column(String, default="pending") # pending, triggered, read
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

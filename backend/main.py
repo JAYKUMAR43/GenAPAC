@@ -11,10 +11,40 @@ from backend.services.text_to_speech import generate_audio
 from backend.services.speech_to_text import process_audio
 import os
 
+from apscheduler.schedulers.background import BackgroundScheduler
+from backend.models import Notification
+from datetime import datetime, timezone
+from pydantic import BaseModel
+
 # Create DB schemas
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Multi-Agent AI Assistant")
+
+def check_scheduled_notifications():
+    db = SessionLocal()
+    try:
+        notifications = db.query(Notification).filter(Notification.status == "pending").all()
+        for n in notifications:
+            # Trigger if it has been pending for at least 15 seconds (Hackathon Mock)
+            # Make sure both datetimes are offset-aware or naive to compare properly
+            now = datetime.now(timezone.utc)
+            if n.created_at:
+                delta = now - n.created_at
+                if delta.total_seconds() > 15:
+                    n.status = "triggered"
+        db.commit()
+    finally:
+        db.close()
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(check_scheduled_notifications, 'interval', seconds=10)
+scheduler.start()
+
+@app.on_event("shutdown")
+def shutdown_event():
+    scheduler.shutdown()
+
 
 # CORS setup for the React frontend
 app.add_middleware(
@@ -105,3 +135,20 @@ async def voice_endpoint(audio: UploadFile = File(...), db: Session = Depends(ge
     result["audio_url"] = audio_url
     result["user_text_detected"] = text_input # Return what was recognized
     return result
+
+class MarkReadRequest(BaseModel):
+    notification_id: int
+
+@app.get("/notifications")
+def get_notifications(db: Session = Depends(get_db)):
+    notifs = db.query(Notification).filter(Notification.status == "triggered").all()
+    return {"notifications": [{"id": n.id, "message": n.message} for n in notifs]}
+
+@app.post("/notifications/mark_read")
+def mark_read(req: MarkReadRequest, db: Session = Depends(get_db)):
+    n = db.query(Notification).filter(Notification.id == req.notification_id).first()
+    if n:
+        n.status = "read"
+        db.commit()
+        return {"status": "success"}
+    return {"status": "error", "message": "Notification not found"}
