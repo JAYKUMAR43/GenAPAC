@@ -3,8 +3,62 @@
 body {
   margin: 0;
   padding: 0;
-  background-color: #0d1117;
-  color: #e6edf3;
+  background-color: #0e1117;
+  color: hsl(210, 20%, 90%);
   font-family: 'Inter', sans-serif;
+  overflow: hidden;
+}
+
+/* Custom CSS noise overlay */
+.bg-noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+}
+
+/* Base scrollbar hide for clean look */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes float-orb-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+}
+
+@keyframes float-orb-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-40px, 30px) scale(0.95); }
+  66% { transform: translate(20px, -40px) scale(1.05); }
+}
+
+.animate-blob-1 {
+  animation: float-orb-1 15s ease-in-out infinite;
+}
+
+.animate-blob-2 {
+  animation: float-orb-2 18s ease-in-out infinite;
+}
+
+/* Teal particle orbiting orbit math */
+@keyframes orbit {
+  0% { transform: rotate(0deg) translateX(18px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(18px) rotate(-360deg); }
+}
+
+.animate-orbit {
+  animation: orbit 3s linear infinite;
+}
+
+/* Smooth pulse for spark icon shadow */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 10px 0px rgba(119, 64, 249, 0.4); }
+  50% { box-shadow: 0 0 20px 4px rgba(119, 64, 249, 0.7); }
+}
+.animate-glow {
+  animation: pulse-glow 3s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
 
