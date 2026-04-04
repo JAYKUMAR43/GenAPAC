@@ -1,12 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer utilities {
-  .glassmorphism {
-    @apply bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl;
-  }
-}
+@import "tailwindcss";
 
 body {
   margin: 0;
