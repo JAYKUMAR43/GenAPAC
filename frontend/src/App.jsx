@@ -9,6 +9,7 @@ function App() {
   const [inputText, setInputText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [notifications, setNotifications] = useState([]);
 
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -20,6 +21,39 @@ function App() {
       chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Auto-poll notifications
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/notifications`);
+        const data = await response.json();
+        if (data.notifications && data.notifications.length > 0) {
+          setNotifications(prev => {
+            // avoid duplicates
+            const newNotifs = data.notifications.filter(n => !prev.find(p => p.id === n.id));
+            return [...prev, ...newNotifs];
+          });
+          // Mark read
+          for (let n of data.notifications) {
+            await fetch(`${API_BASE}/notifications/mark_read`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ notification_id: n.id })
+            });
+          }
+        }
+      } catch (e) {
+        console.error("Failed fetching notifications", e);
+      }
+    };
+    const intervalId = setInterval(fetchNotifications, 5000);
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const dismissNotification = (id) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
 
   const addMessage = (role, text, intent = null) => {
     setMessages(prev => [...prev, { role, text, intent }]);
@@ -157,6 +191,13 @@ function App() {
 
   return (
     <div className="app-container">
+      <div className="toast-container">
+        {notifications.map((n) => (
+          <div key={n.id} className="toast" onClick={() => dismissNotification(n.id)}>
+            🔔 {n.message}
+          </div>
+        ))}
+      </div>
       <div className="header">
         <h1>AI Productivity Assistant (v2)</h1>
       </div>
