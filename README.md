@@ -29,8 +29,7 @@ pip install -r backend/requirements.txt
 # Run the backend locally FROM THE ROOT FOLDER
 uvicorn backend.main:app --reload
 ```
-**Important:** Make sure you create a `.env` in the ROOT directory (where this README is) with:
-`GEMINI_API_KEY=your_google_gemini_api_key_here`
+
 
 ### 3. Frontend Setup
 ```bash

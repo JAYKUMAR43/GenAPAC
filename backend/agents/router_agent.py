@@ -11,9 +11,9 @@ class RouterAgent:
         self.calendar_agent = CalendarAgent()
         self.notes_agent = NotesAgent()
 
-    def handle(self, user_input: str, db: Session) -> dict:
+    def handle(self, user_input: str, history: str, db: Session) -> dict:
         # Step 1: Detect Intent via LLM
-        intent_data = analyze_intent(user_input)
+        intent_data = analyze_intent(user_input, history)
         intent = intent_data.get("intent", "unknown")
         
         # Fallback response from Gemini if it's unknown or conversational
@@ -31,6 +31,8 @@ class RouterAgent:
             result = self.calendar_agent.handle(intent_data, db)
         elif intent.startswith("notes."):
             result = self.notes_agent.handle(intent_data, db)
+        elif intent == "ask_clarification":
+            result = {"status": "success", "response": fallback_msg}
         else:
             result = {"status": "success", "response": fallback_msg}
             

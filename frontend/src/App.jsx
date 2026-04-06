@@ -23,6 +23,7 @@ export default function App() {
   const chatEndRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -68,8 +69,10 @@ export default function App() {
     setIsLoading(true);
 
     try {
+      const historyStr = JSON.stringify(messages.slice(-5).map(m => ({ role: m.role, text: m.text })));
       const formData = new FormData();
       formData.append("message", textToSend);
+      formData.append("history", historyStr);
       const response = await fetch(`${API_BASE}/chat`, { method: "POST", body: formData });
       const data = await response.json();
       setMessages((prev) => [
@@ -145,6 +148,40 @@ export default function App() {
     } catch {
       setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, text: "🎤 Audio Failed" } : m)));
       toast.error("Voice parsing failed.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    e.target.value = null;
+
+    setIsLoading(true);
+    const tempId = Date.now();
+    setMessages((prev) => [...prev, { id: tempId, role: "user", text: `📎 Uploading ${file.name}...` }]);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      
+      const response = await fetch(`${API_BASE}/upload`, { method: "POST", body: formData });
+      const data = await response.json();
+
+      setMessages((prev) =>
+        prev.map((m) => (m.id === tempId ? { ...m, text: `📎 Uploaded ${file.name}` } : m))
+      );
+      
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now(), role: "ai", text: data.response, intent: data.intent },
+      ]);
+      if (data.audio_url) playAudio(data.audio_url);
+    } catch {
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, text: `📎 Upload Failed: ${file.name}` } : m)));
+      toast.error("Failed to process document.");
     } finally {
       setIsLoading(false);
     }
@@ -329,7 +366,11 @@ export default function App() {
             </button>
 
             {/* Paperclip Button */}
-            <button className="p-3 rounded-full text-gray-500 hover:text-gray-300 hover:bg-[#1e2430] transition-colors flex-shrink-0 mb-[1px]">
+            <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept="image/*,application/pdf" />
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading || isRecording}
+              className="p-3 rounded-full text-gray-500 hover:text-gray-300 hover:bg-[#1e2430] transition-colors flex-shrink-0 mb-[1px] disabled:opacity-50">
                <Paperclip size={18} />
             </button>
 

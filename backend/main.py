@@ -1,4 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, Form, Depends
+from typing import Optional
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -15,6 +16,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from backend.models import Notification
 from datetime import datetime, timezone
 from pydantic import BaseModel
+from backend.mcp_server import mcp_server
+
 
 # Create DB schemas
 Base.metadata.create_all(bind=engine)
@@ -26,13 +29,34 @@ def check_scheduled_notifications():
     try:
         notifications = db.query(Notification).filter(Notification.status == "pending").all()
         for n in notifications:
-            # Trigger if it has been pending for at least 15 seconds (Hackathon Mock)
-            # Make sure both datetimes are offset-aware or naive to compare properly
-            now = datetime.now(timezone.utc)
-            if n.created_at:
-                delta = now - n.created_at
-                if delta.total_seconds() > 15:
-                    n.status = "triggered"
+            try:
+                # Assuming trigger_time format is 'YYYY-MM-DD HH:MM' or similar parsable string
+                if n.trigger_time:
+                    try:
+                        # Try parsing exactly
+                        trigger = datetime.strptime(n.trigger_time, "%Y-%m-%d %H:%M")
+                    except ValueError:
+                        # Fallback for ISO format or other formats
+                        import dateutil.parser
+                        trigger = dateutil.parser.parse(n.trigger_time)
+                    
+                    # Convert to naive local to compare or ensure both are UTC. Let's assume naive local for simplicity since format is 'YYYY-MM-DD HH:MM'
+                    now = datetime.now()
+                    if trigger.tzinfo:
+                        now = datetime.now(trigger.tzinfo)
+                        
+                    if now >= trigger:
+                        n.status = "triggered"
+                        n.message = "⏰ Time arrived: " + n.message
+                else:
+                    # Legacy mock if no trigger_time
+                    now = datetime.now(timezone.utc)
+                    if n.created_at:
+                        delta = now - n.created_at
+                        if delta.total_seconds() > 15:
+                            n.status = "triggered"
+            except Exception as e:
+                print("Notification trigger error:", e)
         db.commit()
     finally:
         db.close()
@@ -67,6 +91,10 @@ FRONTEND_DIST = os.path.join(BASE_DIR, "dist")
 if os.path.exists(FRONTEND_DIST):
     app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIST, "assets")), name="assets")
 
+# MCP Server Integration
+app.mount("/mcp", mcp_server.sse_app())
+
+
 @app.get("/")
 async def api_root():
     """
@@ -95,11 +123,11 @@ def get_db():
         db.close()
 
 @app.post("/chat")
-async def chat_endpoint(message: str = Form(...), db: Session = Depends(get_db)):
+async def chat_endpoint(message: str = Form(...), history: Optional[str] = Form(None), db: Session = Depends(get_db)):
     """
     Handle text chat input (English, Hindi, Hinglish)
     """
-    result = router_agent.handle(message, db)
+    result = router_agent.handle(message, history, db)
     
     # Generate Audio response
     response_text = result.get("response", "Done.")
@@ -134,6 +162,32 @@ async def voice_endpoint(audio: UploadFile = File(...), db: Session = Depends(ge
     
     result["audio_url"] = audio_url
     result["user_text_detected"] = text_input # Return what was recognized
+    return result
+
+from backend.services.gemini_service import analyze_document
+
+@app.post("/upload")
+async def upload_endpoint(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    """
+    Handle document/image uploads for AI extraction
+    """
+    file_bytes = await file.read()
+    mime_type = file.content_type
+    
+    # Analyze the document
+    result = analyze_document(file_bytes, mime_type)
+    
+    if result.get("status") == "success":
+        # Pass the extracted text or intent directly to the router
+        extracted_text = result.get("extracted_text", "")
+        if extracted_text:
+            router_result = router_agent.handle(f"Process this extracted document data carefully: {extracted_text}", None, db)
+            
+            response_text = router_result.get("response", "Document processed.")
+            audio_url = generate_audio(response_text)
+            router_result["audio_url"] = audio_url
+            return router_result
+
     return result
 
 class MarkReadRequest(BaseModel):
